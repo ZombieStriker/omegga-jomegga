@@ -12,10 +12,7 @@ import me.zombie_striker.omeggajava.JOmegga;
 
 import javax.imageio.ImageIO;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * The main interface for brs-java. The two operations are reading a save and writing a save.
@@ -23,8 +20,8 @@ import java.util.UUID;
 public final class BRS {
 
     static final byte[] MAGIC = new byte[]{(byte) 'B', (byte) 'R', (byte) 'S'};
-    static final short LATEST_VERSION = 8;
-    static final int DEFAULT_GAME_VERSION = 3642;
+    static final short LATEST_VERSION = 10;
+    static final int DEFAULT_GAME_VERSION = 7325;
 
     private BRS() {
     }
@@ -92,7 +89,9 @@ public final class BRS {
         com.kmschr.brs.io.Writer w = new com.kmschr.brs.io.Writer();
         w.writeAll(MAGIC);
         w.writeShort(LATEST_VERSION);
-        if (LATEST_VERSION >= Version.AddedGameVersionAndHostAndOwnerDataAndImprovedMaterials.ordinal())
+        if (LATEST_VERSION >= Version.V9.ordinal()) {
+            w.writeInt(7325);
+        } else if (LATEST_VERSION >= Version.AddedGameVersionAndHostAndOwnerDataAndImprovedMaterials.ordinal())
             w.writeInt(5674);
         w.writeToStream(os);
     }
@@ -102,11 +101,14 @@ public final class BRS {
         byte[] magic = r.readNBytes(3);
         if (!Arrays.equals(magic, MAGIC))
             throw new IOException("Invalid starting bytes");
-        data.version = Version.getVersion(r.readShort());
+        short v = r.readShort();
+        data.version = Version.getVersion(v);
+        JOmegga.log("V=" + v);
         if (data.version.ordinal() >= Version.AddedGameVersionAndHostAndOwnerDataAndImprovedMaterials.ordinal())
             data.gameVersion = r.readInt();
         else
             data.gameVersion = 3642;
+        JOmegga.log("VERSION " + data.version + "   " + data.gameVersion);
     }
 
     private static void writeHeader1(OutputStream os, SaveData data) throws IOException {
@@ -142,7 +144,7 @@ public final class BRS {
         w.writeStrings(data.mods);
         w.writeStrings(data.brickAssets);
         w.writeInt(data.colors.size());
-        for (Color c : data.colors)
+        for (ColorMode c : data.colors)
             w.writeInt(c.getValue());
         w.writeStrings(data.materials);
         w.writeInt(data.brickOwners.size());
@@ -153,7 +155,7 @@ public final class BRS {
             if (user instanceof BrickOwner)
                 w.writeInt(((BrickOwner) user).brickcount);
         }
-        if (data.version.ordinal() >= Version.t1.ordinal())
+        if (data.version.ordinal() >= Version.V9.ordinal())
             w.writeStrings(Arrays.asList("BPMC_Default")); // physical mats
         w.compressToStream(os);
     }
@@ -186,57 +188,67 @@ public final class BRS {
         data.mods = r.readStrings();
         data.brickAssets = r.readStrings();
         int colors = r.readInt();
-        for (int i = 0; i < colors; i++)
+        data.colors.clear();//TODO: Check to make sure this works: Its clearing the color because the save file already has them
+        for (int i = 0; i < colors; i++) {
             data.colors.add(new Color(r.readInt()));
-        if (data.version.ordinal() >= Version.MaterialsAsStoredAsNames.ordinal())
+        }
+        if (data.version.ordinal() >= Version.MaterialsAsStoredAsNames.ordinal()) {
             data.materials = r.readStrings();
-        else
+        } else {
             data.materials = SaveData.defaultMaterials();
+        }
         int users = r.readInt();
         for (int i = 0; i < users; i++)
             if (data.version.ordinal() >= Version.AddedGameVersionAndHostAndOwnerDataAndImprovedMaterials.ordinal())
                 data.brickOwners.add(r.readBrickOwner());
             else
                 data.brickOwners.add(r.readUser());
-        if (data.version.ordinal() >= Version.t1.ordinal()) {
+        if (data.version.ordinal() >= Version.V9.ordinal()) {
             List<String> bpmc_default = r.readStrings();
+            data.physicalMaterials = bpmc_default;
         }
     }
 
     private static void writeBricks(OutputStream os, SaveData data) throws IOException {
         BitWriter w = new BitWriter();
+        int physicalMats = 0;
+        if (data.version.ordinal() >= Version.V9.ordinal()) {
+            physicalMats = Math.max(data.physicalMaterials.size(), 2);
+        }
         for (Brick brick : data.bricks) {
             w.flushByte();
-            w.writeInt(brick.assetNameIndex,Math.max(2,data.brickAssets.size()));
+            w.writeInt(brick.assetNameIndex, Math.max(2, data.brickAssets.size()));
+            JOmegga.log(brick.assetNameIndex + " " + data.brickAssets.size());
             if (w.writeBit(!brick.size.isZero()))
                 w.writePositiveIntVectorPacked(brick.size);
             w.writeIntVectorPacked(brick.position);
             byte orientation = Utils.combineOrientation(brick.direction, brick.rotation);
             w.writeInt(orientation & 0xFF, 24);
             w.writeBit(brick.collision);
-            if (data.version.ordinal() >= Version.t1.ordinal()) {
+            if (data.version.ordinal() >= Version.V9.ordinal()) {
                 w.writeBit(brick.weaponcollision);
                 w.writeBit(brick.interactioncollision);
                 w.writeBit(brick.toolcollision);
             }
             w.writeBit(brick.visibility);
             w.writeInt(brick.materialIndex, data.materials.size());
-            if (data.version.ordinal() >= Version.t1.ordinal()) {
-                w.writeInt(0,2);
-                w.writeInt(6,11);
+            if (data.version.ordinal() >= Version.V9.ordinal()) {
+                w.writeInt(brick.physicalIndex, physicalMats);
+                w.writeInt(brick.materialIntensity, 11);
             }
+            JOmegga.log("Color value : " + brick.color.getValue() + "  " + data.colors.size() + " : " + brick.color.toString());
             if (brick.color instanceof Color) {
                 w.writeBit(true);
-                w.writeInt(brick.color.getValue());
+                if (data.version.ordinal() >= Version.V9.ordinal()) {
+                    w.writeByte(((Color) brick.color).b());
+                    w.writeByte(((Color) brick.color).g());
+                    w.writeByte(((Color) brick.color).r());
+                } else {
+                    w.writeInt(brick.color.getValue());
+                }
             } else {
                 w.writeBit(false);
-                if(data.version.ordinal() >= Version.t1.ordinal()){
-                    w.writeByte((byte) 5);
-                    w.writeByte((byte) 5);
-                    w.writeByte((byte) 7);
-                }else {
-                    w.writeInt(brick.color.getValue(), data.colors.size());
-                }
+                w.writeInt(brick.color.getValue(), data.colors.size());
             }
             w.writeIntPacked(brick.ownerIndex == null ? 0 : brick.ownerIndex + 1);
         }
@@ -247,11 +259,11 @@ public final class BRS {
     private static void readBricks(InputStream is, SaveData data) throws IOException {
         BitReader r = BitReader.fromCompressed(is);
         r.debug();
-        data.bricks = new ArrayList<>(data.brickCount);
+        data.bricks = new LinkedList<>();
         for (int i = 0; i < data.brickCount; i++) {
             try {
-                Brick brick = new Brick();
                 r.eatByteAlign();
+                Brick brick = new Brick();
                 brick.assetNameIndex = r.readInt(data.brickAssets.size());
                 Vec3 size = new Vec3();
                 if (r.readBit())
@@ -262,33 +274,32 @@ public final class BRS {
                 brick.direction = Direction.getDirection(orientation);
                 brick.rotation = Rotation.getRotation(orientation);
                 brick.collision = r.readBit();
-                if (data.version.ordinal() >= Version.t1.ordinal()) {
+                if (data.version.ordinal() >= Version.V9.ordinal()) {
                     brick.weaponcollision = r.readBit();
                     brick.interactioncollision = r.readBit();
                     brick.toolcollision = r.readBit();
                 }
                 brick.visibility = r.readBit();
-                if (data.version.ordinal() >= Version.t1.ordinal()) {
+                if (data.version.ordinal() >= Version.V9.ordinal()) {
                     brick.materialIndex = r.readInt(data.materials.size());
                     r.readInt(2);
-                    r.readInt(11);
+                    r.readInt(5);
                 } else if (data.version.ordinal() >= Version.AddedGameVersionAndHostAndOwnerDataAndImprovedMaterials.ordinal())
                     brick.materialIndex = r.readInt(data.materials.size());
                 else if (r.readBit())
-                    brick.materialIndex = r.readIntPacked();
+                    brick.materialIndex = r.readUIntPacked();
                 else
                     brick.materialIndex = 1;
 
-                if (!r.readBit())
-                    brick.color = new ColorMode(r.readInt(data.colors.size()));
-                else if (data.version.ordinal() >= Version.t1.ordinal()) {
-                    brick.color = new Color(r.readNBytes(3));
+                if (!r.readBit()) {
+                    int colorindex = r.readInt(data.colors.size());
+                    brick.color = new ColorMode(colorindex);
                 } else {
                     brick.color = new Color(r.readInt());
                 }
 
                 if (data.version.ordinal() >= Version.AddedOwnerData.ordinal())
-                    brick.ownerIndex = r.readIntPacked();
+                    brick.ownerIndex = r.readUIntPacked();
                 else
                     brick.ownerIndex = 0;
 
@@ -299,10 +310,11 @@ public final class BRS {
                 }
 
                 data.bricks.add(brick);
-                JOmegga.log(brick.assetNameIndex+" "+brick.materialIndex+" "+brick.size+"  "+brick.position+" "+brick.collision+" "+brick.visibility+" "+brick.materialIndex+" "+brick.color.color+" "+brick.ownerIndex);
+                JOmegga.log(brick.toString());
+                //JOmegga.log(brick.assetNameIndex + " " + brick.size + "  " + brick.position + " " + brick.collision + " " + brick.visibility + " " + brick.materialIndex + " " + brick.color.toString() + " " + brick.ownerIndex);
 
-            }catch(Exception e4){
-                JOmegga.log("Failed to load a brick.");
+            } catch (Exception e4) {
+                JOmegga.log("Failed to load a brick:  " + e4.getMessage());
             }
         }
     }
@@ -379,7 +391,7 @@ public final class BRS {
     }
 
     private static void writeComponents(OutputStream os, SaveData data) throws IOException {
-        if (data.version.ordinal() < Version.t1.ordinal())
+        if (data.version.ordinal() < Version.V9.ordinal())
             return;
         Writer w = new Writer();
         w.writeInt(0);

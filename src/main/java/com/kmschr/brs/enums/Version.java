@@ -9,12 +9,10 @@ public enum Version {
     AddedScreenshotsData,
     AddedGameVersionAndHostAndOwnerDataAndImprovedMaterials,
     RenamedComponentDescriptors,// Alpha 5 (QA)
-    t1,
-    t2,
-    t3,
-    t4,
-    t5,
-    t6;
+    V8,
+    V9,
+    V10,
+    V11;
 
     private static final Version[] versions = Version.values();
 

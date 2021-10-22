@@ -27,8 +27,9 @@ public class SaveData {
     ZonedDateTime saveTime;
     List<String> mods = new ArrayList<>();
     List<String> brickAssets = new ArrayList<>();
-    List<Color> colors;
+    List<ColorMode> colors;
     List<String> materials;
+    List<String> physicalMaterials;
     List<User> brickOwners = new ArrayList<>();
     List<Brick> bricks = new ArrayList<>();
     List<Component> components = new ArrayList<>();
@@ -62,8 +63,8 @@ public class SaveData {
      * Get a list of the default colors for a Brickadia save file
      * @return list of colors for default colorset
      */
-    public static List<Color> defaultColors() {
-        List<Color> defaults = new ArrayList<>();
+    public static List<ColorMode> defaultColors() {
+        List<ColorMode> defaults = new ArrayList<>();
         InputStream inputStream = SaveData.class.getResourceAsStream("/defaultColorset");
         InputStreamReader streamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
         BufferedReader reader = new BufferedReader(streamReader);
@@ -161,11 +162,11 @@ public class SaveData {
         this.brickAssets = brickAssets;
     }
 
-    public List<Color> getColors() {
+    public List<ColorMode> getColors() {
         return colors;
     }
 
-    public void setColors(List<Color> colors) {
+    public void setColors(List<ColorMode> colors) {
         this.colors = colors;
     }
 

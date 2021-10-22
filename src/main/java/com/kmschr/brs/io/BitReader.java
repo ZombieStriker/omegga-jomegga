@@ -59,7 +59,7 @@ public class BitReader {
         return value;
     }
 
-    public int readIntPacked() {
+    public int readUIntPacked() {
         int value = 0;
         for (int i=0; i < 5; i++) {
             boolean hasNext = readBit();
@@ -74,7 +74,7 @@ public class BitReader {
     }
 
     public Vec3 readPositiveIntVectorPacked() {
-        return new Vec3(readIntPacked(), readIntPacked(), readIntPacked());
+        return new Vec3(readUIntPacked(), readUIntPacked(), readUIntPacked());
     }
 
     public Vec3 readIntVectorPacked() {
@@ -115,7 +115,7 @@ public class BitReader {
     }
 
     private int readSignedIntPacked() {
-        long value = Integer.toUnsignedLong(readIntPacked());
+        long value = Integer.toUnsignedLong(readUIntPacked());
         return (int) ((value >>> 1) * ((value & 1) != 0 ? 1 : -1));
     }
 

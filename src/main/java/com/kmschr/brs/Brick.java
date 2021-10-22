@@ -15,6 +15,8 @@ public class Brick {
     boolean toolcollision = true;
     boolean visibility = true;
     int materialIndex = 0;
+    int physicalIndex=0;
+    int materialIntensity=5;
     ColorMode color = new ColorMode(0);
     Integer ownerIndex;
 
@@ -33,6 +35,8 @@ public class Brick {
                 "Collision: " + collision + '\n' +
                 "Visibility: " + visibility + '\n' +
                 "Material Index: " + materialIndex + '\n' +
+                "Physical Index: " + physicalIndex + '\n' +
+                "Material Intensity: " + materialIntensity + '\n' +
                 "Color: " + color + '\n' +
                 "Owner Index: " + ownerIndex;
     }
@@ -129,5 +133,33 @@ public class Brick {
 
     public void setOwnerIndex(Integer ownerIndex) {
         this.ownerIndex = ownerIndex;
+    }
+
+    public int getMaterialIntensity() {
+        return materialIntensity;
+    }
+
+    public int getPhysicalIndex() {
+        return physicalIndex;
+    }
+
+    public void setInteractioncollision(boolean interactioncollision) {
+        this.interactioncollision = interactioncollision;
+    }
+
+    public void setMaterialIntensity(int materialIntensity) {
+        this.materialIntensity = materialIntensity;
+    }
+
+    public void setPhysicalIndex(int physicalIndex) {
+        this.physicalIndex = physicalIndex;
+    }
+
+    public void setWeaponcollision(boolean weaponcollision) {
+        this.weaponcollision = weaponcollision;
+    }
+
+    public void setToolcollision(boolean toolcollision) {
+        this.toolcollision = toolcollision;
     }
 }
