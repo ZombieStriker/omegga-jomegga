@@ -1,6 +1,7 @@
 package me.zombie_striker.omeggajava;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Message;
+import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 
 import java.util.LinkedList;
@@ -22,6 +23,11 @@ public class ConsoleOutput {
             String message = m.toJSONString();
             if(m instanceof JSONRPC2Request){
                 message = message.replaceAll("params\":\\[\"","params\":\"").replaceAll("\\],\"jsonrpc\"",",\"jsonrpc\"");
+            }else if (m instanceof JSONRPC2Notification){
+               /* if(((JSONRPC2Notification) m).getMethod().equals("saveBricks")) {
+                    message = message.replaceAll("params\":\\[\"","params\":\"").replaceAll("\\],\"jsonrpc\"",",\"jsonrpc\"");
+                }*/
+
             }
             System.out.println(message);
         }

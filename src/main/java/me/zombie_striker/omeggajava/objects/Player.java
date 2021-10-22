@@ -61,6 +61,11 @@ public class Player {
 
                 }
             }
+
+            @Override
+            public Object getReturnValue() {
+                return getPosition();
+            }
         },"player.getPosition", name);
 
 
