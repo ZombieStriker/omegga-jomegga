@@ -28,19 +28,12 @@ public class ConsoleInput implements Runnable {
     public void run() {
         try {
             InputStreamReader is = new InputStreamReader(System.in);
-            File out = new File(Main.getJarFile().getParentFile(), "out.txt");
-            if (!out.exists()) {
-                out.createNewFile();
-            }
-            FileWriter writer = new FileWriter(out);
             while (Main.isRunning()) {
                 StringBuilder message = new StringBuilder();
                 int i;
                 while ((i = is.read()) != 10&&i!=-1 ) {
                     message.append((char) i);
                 }
-                writer.write(message.toString()+"\n");
-                writer.flush();
                 try {
                     JSONRPC2Message m = JSONRPC2Message.parse(message.toString());
                     if (m instanceof JSONRPC2Request) {
@@ -71,8 +64,6 @@ public class ConsoleInput implements Runnable {
                     e4.printStackTrace();
                 }
             }
-            JOmegga.log("Saving log.txt");
-            writer.close();
         } catch (
                 IOException e) {
             e.printStackTrace();
