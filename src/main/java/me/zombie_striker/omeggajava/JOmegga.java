@@ -13,16 +13,83 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 
 import java.io.File;
+import java.net.URISyntaxException;
 import java.util.*;
 
 public class JOmegga {
 
+
+
+    private static ConsoleInput consoleinput;
+    private static ConsoleOutput consoleoutput;
+
+    private static List<Event> events = new LinkedList<>();
+
+    private static List<Listener> listeners = new LinkedList<>();
+
+    private static boolean running = true;
+
+    private static final LinkedList<Player> players = new LinkedList<>();
+
+    private static final HashMap<Long,RPCResponse> responseHandlers = new HashMap<>();
+
+    private static JOmeggaThread corethread = new JOmeggaThread();
+
+
+
+    public static void init(){
+        consoleinput = new ConsoleInput();
+        consoleoutput = new ConsoleOutput();
+        corethread.start();
+    }
+
+
+
+
+    public static boolean isRunning(){
+        return running;
+    }
+
+
+    public static void stop(){
+        running = false;
+    }
+    protected static void callResponse(long input, JSONRPC2Response response){
+        if(responseHandlers.containsKey(input)){
+            responseHandlers.remove(input).onResponse(response);
+        }
+    }
+    protected static long registerResponseHandler(RPCResponse response){
+        for(long i = 0; i < 999; i++){
+            if(!responseHandlers.containsKey(i)){
+                responseHandlers.put(i,response);
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public static List<Event> getEvents(){
+        return events;
+    }
+    public static void callEvent(Event event){
+        while(JOmeggaThread.callingEvents){}
+        events.add(event);
+    }
+
+
     public static File getJOmeggaJar() {
-        return Main.getJarFile();
+        try {
+            return new File(JOmegga.class.getProtectionDomain().getCodeSource().getLocation()
+                    .toURI());
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public static File getOmeggaDir() {
-        return Main.getJarFile().getParentFile().getParentFile().getParentFile();
+        return getJOmeggaJar().getParentFile().getParentFile().getParentFile();
     }
 
     public static void logAndBroadcast(String messaage){
@@ -32,22 +99,22 @@ public class JOmegga {
 
     public static void log(String log) {
         JSONRPC2Notification notification = new JSONRPC2Notification("log", Arrays.asList(log));
-        Main.getOutput().addToQueue(notification);
+        getOutput().addToQueue(notification);
     }
 
     public static void broadcast(String message) {
         JSONRPC2Notification notification = new JSONRPC2Notification("broadcast", Arrays.asList(message));
-        Main.getOutput().addToQueue(notification);
+        getOutput().addToQueue(notification);
     }
 
     public static void exec(String message) {
         JSONRPC2Notification notification = new JSONRPC2Notification("exec", Arrays.asList(message));
-        Main.getOutput().addToQueue(notification);
+        getOutput().addToQueue(notification);
     }
 
     public static void clearallbricks(boolean quiet) {
         JSONRPC2Notification notification = new JSONRPC2Notification("clearAllBricks", Arrays.asList(quiet));
-        Main.getOutput().addToQueue(notification);
+        getOutput().addToQueue(notification);
     }
 
     public static void clearBricks(Player player, boolean quiet) {
@@ -59,7 +126,7 @@ public class JOmegga {
         params.put("target", target);
         params.put("quiet", quiet);
         JSONRPC2Notification notification = new JSONRPC2Notification("clearBricks", params);
-        Main.getOutput().addToQueue(notification);
+        getOutput().addToQueue(notification);
     }
 
     public static void whisper(Player player, String message) {
@@ -67,7 +134,7 @@ public class JOmegga {
         params.put("target", player.getName());
         params.put("line", message);
         JSONRPC2Notification notification = new JSONRPC2Notification("whisper", params);
-        Main.getOutput().addToQueue(notification);
+        getOutput().addToQueue(notification);
     }
 
     public static void save(String name) {
@@ -183,7 +250,7 @@ public class JOmegga {
         params.put("offZ", z);
         params.put("quiet", quiet);
         JSONRPC2Notification notification = new JSONRPC2Notification("loadSaveData", params);
-        Main.getOutput().addToQueue(notification);
+        getOutput().addToQueue(notification);
     }
 
     public static void loadBricks(String name, int x, int y, int z, boolean quiet) {
@@ -194,44 +261,40 @@ public class JOmegga {
         params.put("offZ", z);
         params.put("quiet", quiet);
         JSONRPC2Notification notification = new JSONRPC2Notification("loadBricks", params);
-        Main.getOutput().addToQueue(notification);
-    }
-
-    public static void callEvent(Event event) {
-        Main.callEvent(event);
+        getOutput().addToQueue(notification);
     }
 
     public static void registerListener(Listener listener) {
-        Main.registerListener(listener);
+        listeners.add(listener);
     }
 
     public static void unregisterListener(Listener listener) {
-        Main.unregisterListener(listener);
+        listeners.remove(listener);
+
     }
 
     public static void sendRPCNotification(String method, Object... params) {
         JSONRPC2Notification notification = new JSONRPC2Notification(method, Arrays.asList(params));
-        Main.getOutput().addToQueue(notification);
+        getOutput().addToQueue(notification);
     }
 
     public static void getRPCValue(RPCResponse responseHandler, String method, HashMap<String, Object> namedParams) {
-        long id = Main.registerResponseHandler(responseHandler);
+        long id = registerResponseHandler(responseHandler);
         JSONRPC2Request request = new JSONRPC2Request(method, namedParams, id);
-        Main.getOutput().addToQueue(request);
+        getOutput().addToQueue(request);
     }
 
     public static void getRPCValue(RPCResponse responseHandler, String method, String param) {
-        long id = Main.registerResponseHandler(responseHandler);
+        long id = registerResponseHandler(responseHandler);
         JSONRPC2Request request = new JSONRPC2Request(method, Arrays.asList(param), id);
-        Main.getOutput().addToQueue(request);
+        getOutput().addToQueue(request);
     }
 
-    public static void sendRPCResponse(JSONRPC2Response response) {
-        Main.getOutput().addToQueue(response);
+    public static void sendRPCResponse(JSONRPC2Response response) {getOutput().addToQueue(response);
     }
 
     public static Player getPlayer(String name) {
-        for (Player player : Main.getPlayers()) {
+        for (Player player : getPlayers()) {
             if (player.getName().equals(name))
                 return player;
         }
@@ -239,7 +302,26 @@ public class JOmegga {
     }
 
     public static List<Player> getPlayers() {
-        return Main.getPlayers();
+        return new LinkedList<>(players);
     }
 
+
+
+    protected static ConsoleOutput getOutput() {
+        return consoleoutput;
+    }
+    protected static ConsoleInput getInput(){
+        return consoleinput;
+    }
+    public static void addPlayer(Player player){
+        players.add(player);
+    }
+    public static boolean removePlayer(Player player){
+        return players.remove(player);
+    }
+
+
+    protected static List<Listener> getListeners() {
+        return listeners;
+    }
 }

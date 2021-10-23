@@ -1,9 +1,0 @@
-#!/bin/bash
-FILE=omegga-anti-microbrick
-BASE=$(dirname "$0")
-DEBUG=./target/debug/
-RELEASE=./target/release/
-DIST=./bin/
-
-cd $BASE
-java -jar JOmegga.jar

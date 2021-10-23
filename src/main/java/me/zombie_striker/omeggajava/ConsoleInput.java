@@ -28,7 +28,7 @@ public class ConsoleInput implements Runnable {
     public void run() {
         try {
             InputStreamReader is = new InputStreamReader(System.in);
-            while (Main.isRunning()) {
+            while (JOmegga.isRunning()) {
                 StringBuilder message = new StringBuilder();
                 int i;
                 while ((i = is.read()) != 10&&i!=-1 ) {
@@ -58,7 +58,7 @@ public class ConsoleInput implements Runnable {
                         RPCResponseEvent event = new RPCResponseEvent(req);
                         JOmegga.callEvent(event);
 
-                        Main.callResponse((long) req.getID(), req);
+                        JOmegga.callResponse((long) req.getID(), req);
                     }
                 } catch (Exception e4) {
                     e4.printStackTrace();

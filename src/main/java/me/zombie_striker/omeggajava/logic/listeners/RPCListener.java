@@ -1,14 +1,11 @@
 package me.zombie_striker.omeggajava.logic.listeners;
 
 import me.zombie_striker.omeggajava.JOmegga;
-import me.zombie_striker.omeggajava.Main;
-import me.zombie_striker.omeggajava.RPCResponse;
 import me.zombie_striker.omeggajava.events.*;
 import me.zombie_striker.omeggajava.objects.Player;
 import me.zombie_striker.omeggajava.util.JsonHelper;
 
 import java.util.HashMap;
-import java.util.Map;
 
 public class RPCListener implements Listener {
 
@@ -28,13 +25,13 @@ public class RPCListener implements Listener {
             Player player = new Player((String) map.get("0.name"), (String) map.get("0.id"), (String) map.get("0.state"), (String) map.get("0.controller"));
             JoinEvent joinEvent = new JoinEvent(player);
             JOmegga.callEvent(joinEvent);
-            Main.addPlayer(player);
+            JOmegga.addPlayer(player);
         } else if (event.getNotification().getMethod().equals("leave")) {
-            for(Player player : Main.getPlayers()){
+            for(Player player : JOmegga.getPlayers()){
                 if(player.getName().equals(map.get("0.name"))
                         &&player.getId().equals(map.get("0.id"))
                         &&player.getController().equals(map.get("0.controller"))){
-                    Main.removePlayer(player);
+                    JOmegga.removePlayer(player);
                     break;
                 }
             }
