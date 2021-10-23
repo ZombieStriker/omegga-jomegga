@@ -57,7 +57,7 @@ public class TestListener implements Listener{
 
 ## Credits
 
-Zombie_Striker - JOMegga creator
+Zombie_Striker - JOmegga creator
 
 smallguy - Java-BRS util creator.
 
