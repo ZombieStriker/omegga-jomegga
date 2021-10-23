@@ -3,10 +3,7 @@ package me.zombie_striker.omeggajava;
 
 import com.sun.tools.javac.util.Pair;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
-import me.zombie_striker.omeggajava.events.Event;
-import me.zombie_striker.omeggajava.events.EventHandler;
-import me.zombie_striker.omeggajava.events.EventPriority;
-import me.zombie_striker.omeggajava.events.Listener;
+import me.zombie_striker.omeggajava.events.*;
 import me.zombie_striker.omeggajava.logic.LogicCore;
 import me.zombie_striker.omeggajava.objects.Player;
 import me.zombie_striker.omeggajava.plugins.PluginManager;
@@ -91,7 +88,8 @@ public class Main {
     }
 
     private static void tick() {
-
+        TickEvent tickEvent = new TickEvent();
+        callEvent(tickEvent);
         for(Player player : players){
             player.updatePositon();
         }

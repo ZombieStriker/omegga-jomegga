@@ -307,7 +307,7 @@ public class SaveData {
             JSONObject bobj = new JSONObject();
             bobj.put("asset_name_index",brick.assetNameIndex);
             bobj.put("visibility",brick.visibility);
-            bobj.put("owner_index",brick.ownerIndex);
+            bobj.put("owner_index",(brick.ownerIndex));
             bobj.put("rotation",brick.rotation.ordinal());
             bobj.put("direction",brick.direction.ordinal());
             bobj.put("color",brick.color.getValue());

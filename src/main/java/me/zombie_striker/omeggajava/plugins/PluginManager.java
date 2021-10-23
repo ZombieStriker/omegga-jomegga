@@ -45,8 +45,9 @@ public class PluginManager {
                     name = name.substring(0, name.lastIndexOf('.'));
                     Class<?> cls;
                     try {
-                        cls = Class.forName(name, true, classLoader);
+                        cls = Class.forName(name.replaceAll("/","."), true, classLoader);
                     }catch(ClassNotFoundException e){
+                        JOmegga.log("ERROR: "+e.getMessage());
                         cls = Class.forName(name.substring(name.lastIndexOf("/")+1), true, classLoader);
                     }
                     if (cls.isAnnotationPresent(OmeggaMain.class)) {

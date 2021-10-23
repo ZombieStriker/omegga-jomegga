@@ -25,6 +25,11 @@ public class JOmegga {
         return Main.getJarFile().getParentFile().getParentFile().getParentFile();
     }
 
+    public static void logAndBroadcast(String messaage){
+        log(messaage);
+        broadcast(messaage);
+    }
+
     public static void log(String log) {
         JSONRPC2Notification notification = new JSONRPC2Notification("log", Arrays.asList(log));
         Main.getOutput().addToQueue(notification);
@@ -178,7 +183,6 @@ public class JOmegga {
         params.put("offZ", z);
         params.put("quiet", quiet);
         JSONRPC2Notification notification = new JSONRPC2Notification("loadSaveData", params);
-        JOmegga.log(notification.toJSONString());
         Main.getOutput().addToQueue(notification);
     }
 

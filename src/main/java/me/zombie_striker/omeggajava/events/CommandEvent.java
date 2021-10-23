@@ -11,7 +11,11 @@ public class CommandEvent implements Event{
         this.playername = playername;
         this.message = message;
         this.command = command;
-        this.args = message.split(" ");
+        if(message!=null) {
+            this.args = message.split(" ");
+        }else{
+            this.args=new String[0];
+        }
     }
 
     public String getCommand(){
