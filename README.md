@@ -55,6 +55,8 @@ public class TestListener implements Listener{
 }
 ```
 
+Finally, build your jar and place it in its own folder in the /plugins/ directory. EZ.
+
 ## Credits
 
 Zombie_Striker - JOmegga creator
