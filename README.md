@@ -2,20 +2,24 @@
 Adds the ability to load Java plugins for Omegga.
 
 ## How to create plugins
+//TODO: Upload the project to a maven repo.
+
+For now, you will need to clone this repository and run ```mvn install``` to install a version of JOmegga on your system to include in the jar.
+
 Add the following to your POM file.
-```
-    <repositories>
-		<repository>
-		    <id>jitpack.io</id>
-		    <url>https://jitpack.io</url>
-		</repository>
-	</repositories>
-	
+``` 
+<repositories>
+        <repository>
+            <id>local-maven-repo</id>
+            <url>file:///${user.dir}/.m2</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
-            <groupId>com.github.ZombieStriker</groupId>
-            <artifactId>omegga-jomegga</artifactId>
-            <version>main-SNAPSHOT</version>
+            <groupId>me.zombie_striker</groupId>
+            <artifactId>JOmegga</artifactId>
+            <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
