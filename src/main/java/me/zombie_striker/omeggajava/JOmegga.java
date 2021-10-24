@@ -11,6 +11,8 @@ import me.zombie_striker.omeggajava.events.Listener;
 import me.zombie_striker.omeggajava.logic.listeners.RPCListener;
 import me.zombie_striker.omeggajava.objects.Player;
 import me.zombie_striker.omeggajava.objects.PromisedObject;
+import me.zombie_striker.omeggajava.objects.Vector3D;
+import me.zombie_striker.omeggajava.util.JsonHelper;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 
@@ -169,10 +171,48 @@ public class JOmegga {
         getOutput().addToQueue(notification);
     }
 
+    public static void updatePlayersLocation(HashMap<String, Object> hashMap) {
+        for (int i = 0; i < hashMap.size() / 4; i++) {
+            JSONObject player = (JSONObject) hashMap.get(i + ".player");
+            JSONArray pos = (JSONArray) hashMap.get(i + ".pos");
+            boolean isdead = (boolean) hashMap.get(i + ".isDead");
+            Player playerinst = JOmegga.getPlayer((String) player.get("name"));
+            if (playerinst == null) {
+                JOmegga.log("Player " + player + "'s name is null");
+            } else {
+                playerinst.setAlive(!isdead);
+                if (!isdead)
+                    try {
+                        playerinst.setPosition(new Vector3D((double) pos.get(0), (double) pos.get(1), (double) pos.get(2)));
+                    } catch (Exception e4) {
+                    }
+            }
+        }
+    }
+
+    public static void getAllPlayerPositions() {
+        RPCResponse rpc = new RPCResponse() {
+
+            private HashMap<String, Object> playerPositions = null;
+
+            @Override
+            public void onResponse(JSONRPC2Response response) {
+                playerPositions = JsonHelper.convertJsonToHashMap(response.getResult());
+                updatePlayersLocation(playerPositions);
+            }
+
+            @Override
+            public Object getReturnValue() {
+                return playerPositions;
+            }
+        };
+        getRPCValue(rpc, "getAllPlayerPositions", (String) "undefined");
+    }
+
     public static void save(String name) {
         //JSONRPC2Notification notification = new JSONRPC2Notification("saveBricks", Arrays.asList(name));
         //getOutput().addToQueue(notification);
-       getRPCValue(new RPCResponse() {
+        getRPCValue(new RPCResponse() {
             @Override
             public void onResponse(JSONRPC2Response response) {
 

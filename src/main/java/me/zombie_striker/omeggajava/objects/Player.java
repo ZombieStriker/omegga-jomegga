@@ -15,6 +15,8 @@ public class Player {
     private String state;
     private String controller;
 
+    private boolean alive = true;
+
     private Vector3D positon;
 
     public Player(String name, String id, String state, String controller) {
@@ -89,5 +91,18 @@ public class Player {
 @Deprecated
     public void setID(String s) {
         this.id = id;
+    }
+
+    @Deprecated
+    public void setPosition(Vector3D vector3D) {
+        this.positon = vector3D;
+    }
+
+    public void setAlive(boolean b){
+        this.alive = b;
+    }
+
+    public boolean isAlive() {
+        return alive;
     }
 }

@@ -22,16 +22,19 @@ public class RPCListener implements Listener {
         }
         try {
         if (event.getNotification().getMethod().equals("join")) {
-            if(JOmegga.getPlayer((String) map.get("0.name"))!=null) {
+            if(JOmegga.getPlayer((String) map.get("0.name"))==null) {
                 Player player = new Player((String) map.get("0.name"), (String) map.get("0.id"), (String) map.get("0.state"), (String) map.get("0.controller"));
                 JoinEvent joinEvent = new JoinEvent(player);
                 JOmegga.callEvent(joinEvent);
                 JOmegga.addPlayer(player);
             }else{
                 Player player = JOmegga.getPlayer((String) map.get("0.name"));
-                player.setID((String) map.get("0.id"));
-                player.setState((String) map.get("0.state"));
-                player.setController((String) map.get("0.controller"));
+                if(player != null) {
+                    player.setID((String) map.get("0.id"));
+                    player.setState((String) map.get("0.state"));
+                    player.setController((String) map.get("0.controller"));
+                }
+                JOmegga.log(player.getName()+": "+player.getId());
             }
         } else if (event.getNotification().getMethod().equals("leave")) {
             for(Player player : JOmegga.getPlayers()){
