@@ -11,6 +11,9 @@ public class JsonHelper {
 
     public static HashMap<String,Object> convertJsonToHashMap(Object json){
         try {
+            if(json == null){
+                return null;
+            }
             if(json instanceof JSONArray){
                 HashMap<String,Object> returnVal = new HashMap<>();
                 for(int j = 0; j < ((JSONArray)json).size(); j++){
@@ -51,6 +54,9 @@ public class JsonHelper {
             }
         } catch (Error | Exception e4) {
             JOmegga.log(json+"  -- JSON ERR");
+            for(StackTraceElement s : e4.getStackTrace()){
+                JOmegga.log(s.getClassName()+" "+s.getMethodName()+" "+s.getLineNumber());
+            }
         }
         return null;
     }

@@ -6,8 +6,6 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ConsoleOutput {
 

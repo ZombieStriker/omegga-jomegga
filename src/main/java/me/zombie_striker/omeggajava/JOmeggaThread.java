@@ -44,7 +44,11 @@ public class JOmeggaThread implements Runnable {
         TickEvent tickEvent = new TickEvent();
         JOmegga.callEvent(tickEvent);
         callingEvents=true;
-        List<Event> ev = new ArrayList<>(JOmegga.getEvents());
+        List<Event> ev = new ArrayList<>();
+        for(int e = 0; e < JOmegga.getEvents().size(); e++){
+            Event ee = JOmegga.getEvents().get(e);
+                ev.add(ee);
+        }
         JOmegga.getEvents().clear();
         callingEvents=false;
         for(Event event : ev) {

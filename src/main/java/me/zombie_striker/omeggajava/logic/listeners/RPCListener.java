@@ -22,10 +22,17 @@ public class RPCListener implements Listener {
         }
         try {
         if (event.getNotification().getMethod().equals("join")) {
-            Player player = new Player((String) map.get("0.name"), (String) map.get("0.id"), (String) map.get("0.state"), (String) map.get("0.controller"));
-            JoinEvent joinEvent = new JoinEvent(player);
-            JOmegga.callEvent(joinEvent);
-            JOmegga.addPlayer(player);
+            if(JOmegga.getPlayer((String) map.get("0.name"))!=null) {
+                Player player = new Player((String) map.get("0.name"), (String) map.get("0.id"), (String) map.get("0.state"), (String) map.get("0.controller"));
+                JoinEvent joinEvent = new JoinEvent(player);
+                JOmegga.callEvent(joinEvent);
+                JOmegga.addPlayer(player);
+            }else{
+                Player player = JOmegga.getPlayer((String) map.get("0.name"));
+                player.setID((String) map.get("0.id"));
+                player.setState((String) map.get("0.state"));
+                player.setController((String) map.get("0.controller"));
+            }
         } else if (event.getNotification().getMethod().equals("leave")) {
             for(Player player : JOmegga.getPlayers()){
                 if(player.getName().equals(map.get("0.name"))
@@ -35,12 +42,47 @@ public class RPCListener implements Listener {
                     break;
                 }
             }
+        } else if (event.getNotification().getMethod().equals("bootstrap")) {
+            BootstrapEvent chatevent = new BootstrapEvent();
+            JOmegga.callEvent(chatevent);
+        }else if (event.getNotification().getMethod().equalsIgnoreCase("plugin:players:raw")){
+            int entries = map.keySet().size()/4;
+            for(int i = 0; i < entries; i++){
+                String name = (String) map.get("0."+i+".0");
+                String id = (String) map.get("0."+i+".1");
+                String controller = (String) map.get("0."+i+".2");
+                String state = (String) map.get("0."+i+".3");
+                boolean found = false;
+                for(Player player : JOmegga.getPlayers()){
+                    if(player.getName().equals(name) && player.getId().equals(id)){
+                        found = true;
+                        if(controller==null||controller.equals("null")){
+                            JOmegga.log("CONTROLER FOR "+name+" IS NULL");
+                            controller = null;
+                        }
+                            player.setController(controller);
+                        player.setState(state);
+
+                        break;
+                    }
+                }
+                if(!found){
+                    JOmegga.addPlayer(new Player(name,id,state,controller));
+                    JOmegga.log("Registering existing player: "+name+":"+id+" "+state+" "+controller);
+                }
+            }
         } else if (event.getNotification().getMethod().equals("chat")){
             ChatEvent chatevent = new ChatEvent((String)map.get("0"),(String)map.get("1"));
             JOmegga.callEvent(chatevent);
         } else if (event.getNotification().getMethod().startsWith("chatcmd:")){
-            ChatCommandEvent chatevent = new ChatCommandEvent((String)map.get("0"),event.getNotification().getMethod().substring("chatcmd:".length()),(String)map.get("1"));
-            JOmegga.callEvent(chatevent);
+            JOmegga.log("Chat Command: "+event.getNotification().getMethod());
+            try {
+                ChatCommandEvent chatevent = new ChatCommandEvent((String) map.get("1"), event.getNotification().getMethod().substring("chatcmd:".length()), (String) map.get("0"));
+                JOmegga.callEvent(chatevent);
+            }catch(Exception e4){
+                ChatCommandEvent chatevent = new ChatCommandEvent((String) map.get("1"), event.getNotification().getMethod(), (String) map.get("0"));
+                JOmegga.callEvent(chatevent);
+            }
         } else if (event.getNotification().getMethod().startsWith("cmd:")){
             String command = event.getNotification().getMethod().substring("cmd:".length());
             String message = (String) map.get("0");
@@ -58,7 +100,10 @@ public class RPCListener implements Listener {
             }else{
                 JOmegga.log("Brickadia log "+obj.getClass().getName());
             }
+        }else{
+            JOmegga.log("ERROR ON NOTIFICATION "+event.getNotification().getMethod()+" : "+event.getNotification().getParams().toString());
         }
+
         } catch (Exception e) {
             JOmegga.log("Error : "+e.getLocalizedMessage());
             for(StackTraceElement s : e.getStackTrace()){

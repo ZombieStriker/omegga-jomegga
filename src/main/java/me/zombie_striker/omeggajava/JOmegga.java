@@ -8,7 +8,9 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 import me.zombie_striker.omeggajava.events.Event;
 import me.zombie_striker.omeggajava.events.Listener;
+import me.zombie_striker.omeggajava.logic.listeners.RPCListener;
 import me.zombie_striker.omeggajava.objects.Player;
+import me.zombie_striker.omeggajava.objects.PromisedObject;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 
@@ -17,7 +19,6 @@ import java.net.URISyntaxException;
 import java.util.*;
 
 public class JOmegga {
-
 
 
     private static ConsoleInput consoleinput;
@@ -31,49 +32,51 @@ public class JOmegga {
 
     private static final LinkedList<Player> players = new LinkedList<>();
 
-    private static final HashMap<Long,RPCResponse> responseHandlers = new HashMap<>();
+    private static final HashMap<Long, RPCResponse> responseHandlers = new HashMap<>();
 
     private static JOmeggaThread corethread = new JOmeggaThread();
 
 
-
-    public static void init(){
+    public static void init() {
+        JOmegga.registerListener(new RPCListener());
         consoleinput = new ConsoleInput();
         consoleoutput = new ConsoleOutput();
         corethread.start();
     }
 
 
-
-
-    public static boolean isRunning(){
+    public static boolean isRunning() {
         return running;
     }
 
 
-    public static void stop(){
+    public static void stop() {
         running = false;
     }
-    protected static void callResponse(long input, JSONRPC2Response response){
-        if(responseHandlers.containsKey(input)){
+
+    protected static void callResponse(long input, JSONRPC2Response response) {
+        if (responseHandlers.containsKey(input)) {
             responseHandlers.remove(input).onResponse(response);
         }
     }
-    protected static long registerResponseHandler(RPCResponse response){
-        for(long i = 0; i < 999; i++){
-            if(!responseHandlers.containsKey(i)){
-                responseHandlers.put(i,response);
+
+    protected static long registerResponseHandler(RPCResponse response) {
+        for (long i = 0; i < 999; i++) {
+            if (!responseHandlers.containsKey(i)) {
+                responseHandlers.put(i, response);
                 return i;
             }
         }
         return -1;
     }
 
-    public static List<Event> getEvents(){
+    public static List<Event> getEvents() {
         return events;
     }
-    public static void callEvent(Event event){
-        while(JOmeggaThread.callingEvents){}
+
+    public static void callEvent(Event event) {
+        while (JOmeggaThread.callingEvents) {
+        }
         events.add(event);
     }
 
@@ -92,9 +95,38 @@ public class JOmegga {
         return getJOmeggaJar().getParentFile().getParentFile().getParentFile();
     }
 
-    public static void logAndBroadcast(String messaage){
+    public static void logAndBroadcast(String messaage) {
         log(messaage);
         broadcast(messaage);
+    }
+
+    public static PromisedObject writeln(String command) {
+        JSONRPC2Notification notification = new JSONRPC2Notification("exec", Arrays.asList(command));
+        getOutput().addToQueue(notification);
+        PromisedObject promise = new PromisedObject();
+        getRPCValue(new RPCResponse() {
+            private JSONRPC2Response res;
+
+            @Override
+            public void onResponse(JSONRPC2Response response) {
+                this.res = response;
+                if (res == null || response.getResult() == null) {
+                    promise.setPromise("null");
+                    return;
+                }
+                try {
+                    promise.setPromise(((JSONObject) response.getResult()).toJSONString());
+                } catch (Exception e3) {
+                    promise.setPromise(((JSONArray) response.getResult()).toJSONString());
+                }
+            }
+
+            @Override
+            public Object getReturnValue() {
+                return res;
+            }
+        }, "exec", command);
+        return promise;
     }
 
     public static void log(String log) {
@@ -138,7 +170,9 @@ public class JOmegga {
     }
 
     public static void save(String name) {
-        getRPCValue(new RPCResponse() {
+        //JSONRPC2Notification notification = new JSONRPC2Notification("saveBricks", Arrays.asList(name));
+        //getOutput().addToQueue(notification);
+       getRPCValue(new RPCResponse() {
             @Override
             public void onResponse(JSONRPC2Response response) {
 
@@ -183,7 +217,7 @@ public class JOmegga {
                 for (int i = 0; i < colors.size(); i++) {
                     JSONArray array2 = (JSONArray) colors.get(i);
                     try {
-                        colormodes.set(i,new Color((byte) (long) array2.get(2), (byte) (long) array2.get(1), (byte) (long) array2.get(0), (byte) (long) array2.get(3)));
+                        colormodes.set(i, new Color((byte) (long) array2.get(2), (byte) (long) array2.get(1), (byte) (long) array2.get(0), (byte) (long) array2.get(3)));
                     } catch (Exception e4) {
 
                     }
@@ -201,11 +235,11 @@ public class JOmegga {
                     brick.setOwnerIndex((int) ((long) obj.get("owner_index")));
                     brick.setRotation(Rotation.values()[((int) ((long) obj.get("rotation")))]);
                     brick.setDirection(Direction.values()[((int) ((long) obj.get("direction")))]);
-                    if(obj.get("color") instanceof Long) {
+                    if (obj.get("color") instanceof Long) {
                         brick.setColor(new ColorMode((int) ((long) obj.get("color"))));
-                    }else{
+                    } else {
                         JSONArray colorarray = (JSONArray) obj.get("color");
-                        brick.setColor(new Color((int)(long)colorarray.get(2),(int)(long)colorarray.get(1),(int)(long)colorarray.get(1),255));
+                        brick.setColor(new Color((int) (long) colorarray.get(2), (int) (long) colorarray.get(1), (int) (long) colorarray.get(1), 255));
                     }
                     brick.setCollision((Boolean) ((JSONObject) obj.get("collision")).get("player"));
                     brick.setSize(((int) ((long) ((JSONArray) obj.get("size")).get(0))), ((int) ((long) ((JSONArray) obj.get("size")).get(1))), ((int) ((long) ((JSONArray) obj.get("size")).get(2))));
@@ -290,7 +324,8 @@ public class JOmegga {
         getOutput().addToQueue(request);
     }
 
-    public static void sendRPCResponse(JSONRPC2Response response) {getOutput().addToQueue(response);
+    public static void sendRPCResponse(JSONRPC2Response response) {
+        getOutput().addToQueue(response);
     }
 
     public static Player getPlayer(String name) {
@@ -306,17 +341,19 @@ public class JOmegga {
     }
 
 
-
     protected static ConsoleOutput getOutput() {
         return consoleoutput;
     }
-    protected static ConsoleInput getInput(){
+
+    protected static ConsoleInput getInput() {
         return consoleinput;
     }
-    public static void addPlayer(Player player){
+
+    public static void addPlayer(Player player) {
         players.add(player);
     }
-    public static boolean removePlayer(Player player){
+
+    public static boolean removePlayer(Player player) {
         return players.remove(player);
     }
 

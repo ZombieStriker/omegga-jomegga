@@ -44,13 +44,19 @@ public class Player {
         return positon;
     }
 
+    public void teleport(int x, int y, int z){
+        JOmegga.writeln("Chat.Command /TP "+getName()+" "+x+" "+y+" "+z);
+        this.positon = new Vector3D(x,y,z);
+    }
+
     public void updatePositon() {
-        JOmegga.getRPCValue(new RPCResponse() {
+        RPCResponse update = new RPCResponse() {
             @Override
             public void onResponse(JSONRPC2Response response) {
                 HashMap<String, Object> result = JsonHelper.convertJsonToHashMap(response.getResult());
-                if(result==null)
+                if(result==null) {
                     return;
+                }
                 try {
                     positon = new Vector3D(Double.parseDouble(result.get("0") + ""), Double.parseDouble(result.get("1") + ""), Double.parseDouble(result.get("2") + "")
                     );
@@ -61,13 +67,27 @@ public class Player {
 
                 }
             }
-
             @Override
             public Object getReturnValue() {
                 return getPosition();
             }
-        },"player.getPosition", name);
+        };
+        JOmegga.getRPCValue(update,"player.getPosition", name);
 
 
+    }
+
+    @Deprecated
+    public void setController(String controller) {
+        this.controller = controller;
+    }
+
+    @Deprecated
+    public void setState(String state) {
+        this.state = state;
+    }
+@Deprecated
+    public void setID(String s) {
+        this.id = id;
     }
 }

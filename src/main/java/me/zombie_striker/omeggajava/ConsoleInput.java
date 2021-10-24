@@ -48,6 +48,7 @@ public class ConsoleInput implements Runnable {
                             JSONRPC2Response response = new JSONRPC2Response("stop", req.getID());
                             JOmegga.sendRPCResponse(response);
                             JOmegga.callEvent(new StopEvent());
+                            JOmegga.log("Stopping...");
                         }
                     } else if (m instanceof JSONRPC2Notification) {
                         JSONRPC2Notification notification = (JSONRPC2Notification) m;
