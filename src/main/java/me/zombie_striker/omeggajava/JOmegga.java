@@ -176,6 +176,13 @@ public class JOmegga {
         getOutput().addToQueue(notification);
     }
 
+    public static void whisper(String player, String message) {
+        HashMap<String, Object> params = new HashMap<>();
+        params.put("target", player);
+        params.put("line", message);
+        JSONRPC2Notification notification = new JSONRPC2Notification("whisper", params);
+        getOutput().addToQueue(notification);
+    }
     public static void whisper(Player player, String message) {
         HashMap<String, Object> params = new HashMap<>();
         params.put("target", player.getName());
