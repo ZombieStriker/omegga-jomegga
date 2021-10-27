@@ -5,18 +5,12 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 import me.zombie_striker.omeggajava.events.*;
-import me.zombie_striker.omeggajava.objects.Player;
 import me.zombie_striker.omeggajava.util.JsonHelper;
-import net.minidev.json.JSONArray;
-import net.minidev.json.JSONObject;
-import net.minidev.json.parser.JSONParser;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.Map;
 
 public class ConsoleInput implements Runnable {
 
@@ -41,6 +35,10 @@ public class ConsoleInput implements Runnable {
                         RPCRequestEvent event = new RPCRequestEvent(req);
                         JOmegga.callEvent(event);
                         if (req.getMethod().equals("init")) {
+                            HashMap<String, Object> config = JsonHelper.convertJsonToHashMap(req.getParams());
+                            for(Map.Entry<String, Object> key : config.entrySet()){
+                                JOmegga.getConfig().set(key.getKey(),key.getValue());
+                            }
                             JSONRPC2Response response = new JSONRPC2Response("init", req.getID());
                             JOmegga.sendRPCResponse(response);
                             JOmegga.callEvent(new InitEvent());

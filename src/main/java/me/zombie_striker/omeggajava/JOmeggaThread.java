@@ -57,8 +57,13 @@ public class JOmeggaThread implements Runnable {
             for(EventPriority e : EventPriority.values()){
                 priorityList.put(e,new LinkedList<>());
             }
+            List<Listener> list = new ArrayList<>();
+            for(int l = 0; l < JOmegga.getListeners().size(); l++){
+               Listener ll = JOmegga.getListeners().get(l);
+               list.add(ll);
+            }
 
-            for (Listener listener : JOmegga.getListeners()) {
+            for (Listener listener : list) {
                 Class klass = listener.getClass();
                 for (Method method : klass.getMethods()) {
                     if (method.isAnnotationPresent(EventHandler.class)) {

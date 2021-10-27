@@ -41,6 +41,23 @@ public class Brick {
                 "Owner Index: " + ownerIndex;
     }
 
+    public Brick clone(){
+        Brick clone = new Brick();
+        clone.assetNameIndex = assetNameIndex;
+        clone.size = size;
+        clone.position = position;
+        clone.direction = direction;
+        clone.rotation = rotation;
+        clone.color = color;
+        clone.collision = collision;
+        clone.visibility = visibility;
+        clone.materialIntensity = materialIntensity;
+        clone.materialIndex = materialIndex;
+        clone.physicalIndex = physicalIndex;
+        clone.ownerIndex = ownerIndex;
+        return clone;
+    }
+
     public int getAssetNameIndex() {
         return assetNameIndex;
     }

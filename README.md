@@ -28,8 +28,19 @@ Add the following to your POM file.
 From there, you just need to create your main class, and call the JOmegga.init(); method. Your code should look like:
 ```\
     public static void main(String... args){
-        JOmegga.init();
-        //Your code here
+        JOmegga.registerListener(/*YOUR LISTENER*/);
+        JOmegga.init("PluginName");//Replace PluginName with your plugin's name
+       
+       //Your code
+       
+       //So it doesn't overload your system.
+        while (JOmegga.isRunning()) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 ```
     

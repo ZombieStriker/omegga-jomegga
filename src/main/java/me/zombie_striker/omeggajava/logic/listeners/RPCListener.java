@@ -4,6 +4,7 @@ import me.zombie_striker.omeggajava.JOmegga;
 import me.zombie_striker.omeggajava.events.*;
 import me.zombie_striker.omeggajava.objects.Player;
 import me.zombie_striker.omeggajava.util.JsonHelper;
+import net.minidev.json.JSONArray;
 
 import java.util.HashMap;
 
@@ -27,14 +28,6 @@ public class RPCListener implements Listener {
                 JoinEvent joinEvent = new JoinEvent(player);
                 JOmegga.callEvent(joinEvent);
                 JOmegga.addPlayer(player);
-            }else{
-                Player player = JOmegga.getPlayer((String) map.get("0.name"));
-                if(player != null) {
-                    player.setID((String) map.get("0.id"));
-                    player.setState((String) map.get("0.state"));
-                    player.setController((String) map.get("0.controller"));
-                }
-                JOmegga.log(player.getName()+": "+player.getId());
             }
         } else if (event.getNotification().getMethod().equals("leave")) {
             for(Player player : JOmegga.getPlayers()){
@@ -45,6 +38,11 @@ public class RPCListener implements Listener {
                     break;
                 }
             }
+        } else if (event.getNotification().getMethod().equals("plugin:status")) {
+            String name = (String) map.get("0");
+            if(name.equalsIgnoreCase(JOmegga.getPluginName())){
+                //TODO: Check if plugins are installed
+            }
         } else if (event.getNotification().getMethod().equals("bootstrap")) {
             BootstrapEvent chatevent = new BootstrapEvent();
             JOmegga.callEvent(chatevent);
@@ -53,8 +51,8 @@ public class RPCListener implements Listener {
             for(int i = 0; i < entries; i++){
                 String name = (String) map.get("0."+i+".0");
                 String id = (String) map.get("0."+i+".1");
-                String controller = (String) map.get("0."+i+".2");
                 String state = (String) map.get("0."+i+".3");
+                String controller = (String) map.get("0."+i+".2");
                 boolean found = false;
                 for(Player player : JOmegga.getPlayers()){
                     if(player.getName().equals(name) && player.getId().equals(id)){
@@ -65,7 +63,7 @@ public class RPCListener implements Listener {
                         }
                             player.setController(controller);
                         player.setState(state);
-
+                        JOmegga.log("Updating existing player: "+name+":"+id+" "+state+" "+controller);
                         break;
                     }
                 }

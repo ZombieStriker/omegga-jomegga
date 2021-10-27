@@ -9,6 +9,7 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 import me.zombie_striker.omeggajava.events.Event;
 import me.zombie_striker.omeggajava.events.Listener;
 import me.zombie_striker.omeggajava.logic.listeners.RPCListener;
+import me.zombie_striker.omeggajava.objects.Config;
 import me.zombie_striker.omeggajava.objects.Player;
 import me.zombie_striker.omeggajava.objects.PromisedObject;
 import me.zombie_striker.omeggajava.objects.Vector3D;
@@ -38,12 +39,24 @@ public class JOmegga {
 
     private static JOmeggaThread corethread = new JOmeggaThread();
 
+    private static Config config = new Config();
 
-    public static void init() {
+    private static String pluginname;
+
+    public static String getPluginName(){
+        return pluginname;
+    }
+
+    public static void init(String pluginname) {
+        JOmegga.pluginname = pluginname;
         JOmegga.registerListener(new RPCListener());
         consoleinput = new ConsoleInput();
         consoleoutput = new ConsoleOutput();
         corethread.start();
+    }
+
+    public static Config getConfig(){
+        return config;
     }
 
 
@@ -63,7 +76,7 @@ public class JOmegga {
     }
 
     protected static long registerResponseHandler(RPCResponse response) {
-        for (long i = 0; i < 999; i++) {
+        for (long i = (long) (Math.random()*50); i < 999; i++) {
             if (!responseHandlers.containsKey(i)) {
                 responseHandlers.put(i, response);
                 return i;
@@ -172,6 +185,10 @@ public class JOmegga {
     }
 
     public static void updatePlayersLocation(HashMap<String, Object> hashMap) {
+        if(hashMap.size() < 4){
+            JOmegga.log("Updating player's position returned a hashmap with "+ hashMap.size()+" values.");
+            return;
+        }
         for (int i = 0; i < hashMap.size() / 4; i++) {
             JSONObject player = (JSONObject) hashMap.get(i + ".player");
             JSONArray pos = (JSONArray) hashMap.get(i + ".pos");
@@ -191,6 +208,8 @@ public class JOmegga {
     }
 
     public static void getAllPlayerPositions() {
+        if(getPlayers().size()==0)
+            return;
         RPCResponse rpc = new RPCResponse() {
 
             private HashMap<String, Object> playerPositions = null;
@@ -206,7 +225,7 @@ public class JOmegga {
                 return playerPositions;
             }
         };
-        getRPCValue(rpc, "getAllPlayerPositions", (String) "undefined");
+        getRPCValue(rpc, "getAllPlayerPositions", "undefined");
     }
 
     public static void save(String name) {
@@ -354,12 +373,20 @@ public class JOmegga {
 
     public static void getRPCValue(RPCResponse responseHandler, String method, HashMap<String, Object> namedParams) {
         long id = registerResponseHandler(responseHandler);
+        if(id==-1) {
+            JOmegga.log("getRPCValue "+method+" could not be send as the id returned is -1");
+            return;
+        }
         JSONRPC2Request request = new JSONRPC2Request(method, namedParams, id);
         getOutput().addToQueue(request);
     }
 
     public static void getRPCValue(RPCResponse responseHandler, String method, String param) {
         long id = registerResponseHandler(responseHandler);
+        if(id==-1) {
+            JOmegga.log("getRPCValue "+method+" could not be send as the id returned is -1");
+            return;
+        }
         JSONRPC2Request request = new JSONRPC2Request(method, Arrays.asList(param), id);
         getOutput().addToQueue(request);
     }

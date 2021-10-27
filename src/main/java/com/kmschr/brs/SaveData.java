@@ -32,7 +32,7 @@ public class SaveData {
     List<String> brickAssets = new ArrayList<>();
     List<ColorMode> colors;
     List<String> materials;
-    List<String> physicalMaterials;
+    List<String> physicalMaterials = new ArrayList<>();
     List<User> brickOwners = new ArrayList<>();
     List<Brick> bricks = new ArrayList<>();
     List<Component> components = new ArrayList<>();
@@ -45,6 +45,27 @@ public class SaveData {
 
     private static final List<String> SUPPORTED_MAPS = Arrays.asList("Plate", "Peaks", "Studio","Space");
     private static final List<String> DEFAULT_MATERIALS = Arrays.asList("BMC_Plastic", "BMC_Glow", "BMC_Metallic", "BMC_Hologram", "BMC_Ghost");
+
+    public SaveData clone(){
+        SaveData clone = new SaveData();
+        clone.map = map;
+        clone.author = author;
+        clone.host = host;
+        clone.description = description;
+        clone.saveTime = saveTime;
+        clone.mods = new ArrayList<>(mods);
+        clone.brickAssets = new ArrayList<>(brickAssets);
+        clone.colors = new ArrayList<>(colors);
+        clone.materials = new ArrayList<>(materials);
+        clone.physicalMaterials = new ArrayList<>(physicalMaterials);
+        clone.brickOwners = new ArrayList<>(brickOwners);
+        for(Brick brick : bricks){
+            clone.getBricks().add(brick.clone());
+        }
+        clone.components = new ArrayList<>(components);
+        clone.screenshot = screenshot;
+        return clone;
+    }
 
     public SaveData() {
         map = "Plate";
