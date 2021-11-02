@@ -20,7 +20,7 @@ public class ConsoleOutput {
         for(JSONRPC2Message m : messages1){
             String message = m.toJSONString();
             if(m instanceof JSONRPC2Request){
-                message = message.replaceAll("params\":\\[\"","params\":\"").replaceAll("\\],\"jsonrpc\"",",\"jsonrpc\"");
+                message = message.replaceAll("params\":\\[","params\":").replaceAll("\\],\"jsonrpc\"",",\"jsonrpc\"");
             }else if (m instanceof JSONRPC2Notification){
                /* if(((JSONRPC2Notification) m).getMethod().equals("saveBricks")) {
                     message = message.replaceAll("params\":\\[\"","params\":\"").replaceAll("\\],\"jsonrpc\"",",\"jsonrpc\"");

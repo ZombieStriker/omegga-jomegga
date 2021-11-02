@@ -338,10 +338,10 @@ public class SaveData {
             collision.put("weapon",brick.weaponcollision);
             collision.put("interaction",brick.interactioncollision);
             collision.put("tool",brick.toolcollision);
-            bobj.put("material_intensity",5);
+            bobj.put("material_intensity",brick.getMaterialIntensity());
             bobj.put("collision",collision);
-            bobj.put("physical_index",0);
-            bobj.put("material_index",0);
+            bobj.put("physical_index",brick.getPhysicalIndex());
+            bobj.put("material_index",brick.getMaterialIndex());
             JSONArray size = new JSONArray();
             size.add(brick.getSize().x);
             size.add(brick.getSize().y);

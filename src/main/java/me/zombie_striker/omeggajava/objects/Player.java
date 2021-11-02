@@ -47,7 +47,7 @@ public class Player {
     }
 
     public void teleport(int x, int y, int z){
-        JOmegga.writeln("Chat.Command /TP "+getName()+" "+x+" "+y+" "+z);
+        JOmegga.writeln("Chat.Command /TP "+getName().split(" ")[0]+" "+x+" "+y+" "+z);
         this.positon = new Vector3D(x,y,z);
     }
 
@@ -77,6 +77,12 @@ public class Player {
         JOmegga.getRPCValue(update,"player.getPosition", name);
 
 
+    }
+
+    public boolean isHost(){
+        if(getId()==null)
+            return false;
+        return getId().equals(JOmegga.getHostUUID().toString());
     }
 
     @Deprecated

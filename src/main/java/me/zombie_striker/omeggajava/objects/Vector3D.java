@@ -21,4 +21,14 @@ public class Vector3D {
     public double getY() {
         return y;
     }
+
+    public double distanceSquared(Vector3D location){
+        double xdist = getX()-location.getX();
+        double ydist = getY()-location.getY();
+        double zdist = getZ()-location.getZ();
+        return (xdist*xdist)+(ydist*ydist)+(zdist*zdist);
+    }
+    public double distance(Vector3D location){
+        return Math.sqrt(distanceSquared(location));
+    }
 }

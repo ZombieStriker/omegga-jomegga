@@ -14,8 +14,15 @@ import java.util.Map;
 
 public class ConsoleInput implements Runnable {
 
+    private Thread thread;
+
     public ConsoleInput() {
-        new Thread(this).start();
+       thread =  new Thread(this);
+       thread.start();
+    }
+
+    public void stop(){
+        thread.stop();
     }
 
     @Override
@@ -47,6 +54,7 @@ public class ConsoleInput implements Runnable {
                             JOmegga.sendRPCResponse(response);
                             JOmegga.callEvent(new StopEvent());
                             JOmegga.log("Stopping...");
+                            JOmegga.stop();
                         }
                     } else if (m instanceof JSONRPC2Notification) {
                         JSONRPC2Notification notification = (JSONRPC2Notification) m;

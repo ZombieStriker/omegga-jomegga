@@ -33,6 +33,9 @@ public class Brick {
                 "Direction: " + direction + '\n' +
                 "Rotation: " + rotation + '\n' +
                 "Collision: " + collision + '\n' +
+                "Collision-Interaction: " + interactioncollision + '\n' +
+                "Collision-Weapon: " + weaponcollision + '\n' +
+                "Collision-Tool: " + toolcollision + '\n' +
                 "Visibility: " + visibility + '\n' +
                 "Material Index: " + materialIndex + '\n' +
                 "Physical Index: " + physicalIndex + '\n' +
@@ -50,6 +53,9 @@ public class Brick {
         clone.rotation = rotation;
         clone.color = color;
         clone.collision = collision;
+        clone.weaponcollision = weaponcollision;
+        clone.toolcollision = toolcollision;
+        clone.interactioncollision = interactioncollision;
         clone.visibility = visibility;
         clone.materialIntensity = materialIntensity;
         clone.materialIndex = materialIndex;

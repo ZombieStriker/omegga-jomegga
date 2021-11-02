@@ -9,10 +9,7 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 import me.zombie_striker.omeggajava.events.Event;
 import me.zombie_striker.omeggajava.events.Listener;
 import me.zombie_striker.omeggajava.logic.listeners.RPCListener;
-import me.zombie_striker.omeggajava.objects.Config;
-import me.zombie_striker.omeggajava.objects.Player;
-import me.zombie_striker.omeggajava.objects.PromisedObject;
-import me.zombie_striker.omeggajava.objects.Vector3D;
+import me.zombie_striker.omeggajava.objects.*;
 import me.zombie_striker.omeggajava.util.JsonHelper;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
@@ -24,61 +21,111 @@ import java.util.*;
 public class JOmegga {
 
 
-    private static ConsoleInput consoleinput;
-    private static ConsoleOutput consoleoutput;
+    private ConsoleInput consoleinput;
+    private ConsoleOutput consoleoutput;
 
-    private static List<Event> events = new LinkedList<>();
+    private List<Event> events = new LinkedList<>();
 
-    private static List<Listener> listeners = new LinkedList<>();
+    private List<Listener> listeners = new LinkedList<>();
 
-    private static boolean running = true;
+    private boolean running = true;
 
-    private static final LinkedList<Player> players = new LinkedList<>();
+    private final LinkedList<Player> players = new LinkedList<>();
 
-    private static final HashMap<Long, RPCResponse> responseHandlers = new HashMap<>();
+    private final HashMap<Long, RPCResponse> responseHandlers = new HashMap<>();
 
-    private static JOmeggaThread corethread = new JOmeggaThread();
+    private JOmeggaThread corethread = new JOmeggaThread();
 
-    private static Config config = new Config();
+    private Config config = new Config();
+    private Store store = new Store();
+    private MinigameManager minigameManager = new MinigameManager();
 
-    private static String pluginname;
+    private String pluginname;
 
-    public static String getPluginName(){
-        return pluginname;
+    private String servername;
+    private String description;
+    private long brickcount = 0;
+
+
+    private long lastUpdatePlayerPos = 0;
+    private long lastUpdateMinigame=0;
+
+    private static JOmegga instance = null;
+    protected static JOmegga getInstance(){
+        if(instance==null){
+            return instance = new JOmegga();
+        }
+        return instance;
+    }
+
+    private static UUID hostUUID = null;
+
+    @Deprecated
+    public static void setHostUUID(UUID uuid){
+        JOmegga.hostUUID = uuid;
+    }
+
+    public static UUID getHostUUID() {
+        if(hostUUID==null){
+            JOmegga.getRPCValue(new RPCResponse() {
+                @Override
+                public void onResponse(JSONRPC2Response response) {
+                    hostUUID = UUID.fromString((String) response.getResult());
+                }
+
+                @Override
+                public Object getReturnValue() {
+                    return null;
+                }
+            },"getHostId",(String)"undefined");
+        }
+        return hostUUID;
+    }
+
+    public static String getPluginName() {
+        return getInstance().pluginname;
     }
 
     public static void init(String pluginname) {
-        JOmegga.pluginname = pluginname;
+        JOmegga.getInstance().pluginname = pluginname;
         JOmegga.registerListener(new RPCListener());
-        consoleinput = new ConsoleInput();
-        consoleoutput = new ConsoleOutput();
-        corethread.start();
+        getInstance().consoleinput = new ConsoleInput();
+        getInstance().consoleoutput = new ConsoleOutput();
+        getInstance().corethread.start();
     }
 
-    public static Config getConfig(){
-        return config;
+    public static Config getConfig() {
+        return getInstance().config;
     }
 
 
     public static boolean isRunning() {
-        return running;
+        return getInstance().running;
     }
 
 
     public static void stop() {
-        running = false;
+        getInstance().running = false;
     }
 
     protected static void callResponse(long input, JSONRPC2Response response) {
-        if (responseHandlers.containsKey(input)) {
-            responseHandlers.remove(input).onResponse(response);
+        if (getInstance().responseHandlers.containsKey(input)) {
+            getInstance().responseHandlers.remove(input).onResponse(response);
         }
     }
 
     protected static long registerResponseHandler(RPCResponse response) {
-        for (long i = (long) (Math.random()*50); i < 999; i++) {
-            if (!responseHandlers.containsKey(i)) {
-                responseHandlers.put(i, response);
+        int length = getInstance().responseHandlers.size();
+        for (long i = 0; i < length; i++) {
+            if (getInstance().responseHandlers.containsKey(i)) {
+                if (System.currentTimeMillis() - getInstance().responseHandlers.get(i).getSentTime() > 10000) {
+                    getInstance(). responseHandlers.remove(i);
+                }
+            }
+        }
+        for (long i = 0; i < Long.MAX_VALUE; i++) {
+            if (!getInstance().responseHandlers.containsKey(i)) {
+                getInstance().responseHandlers.put(i, response);
                 return i;
             }
         }
@@ -86,13 +133,13 @@ public class JOmegga {
     }
 
     public static List<Event> getEvents() {
-        return events;
+        return getInstance().events;
     }
 
     public static void callEvent(Event event) {
         while (JOmeggaThread.callingEvents) {
         }
-        events.add(event);
+        getInstance().  events.add(event);
     }
 
 
@@ -183,6 +230,7 @@ public class JOmegga {
         JSONRPC2Notification notification = new JSONRPC2Notification("whisper", params);
         getOutput().addToQueue(notification);
     }
+
     public static void whisper(Player player, String message) {
         HashMap<String, Object> params = new HashMap<>();
         params.put("target", player.getName());
@@ -192,8 +240,8 @@ public class JOmegga {
     }
 
     public static void updatePlayersLocation(HashMap<String, Object> hashMap) {
-        if(hashMap.size() < 4){
-            JOmegga.log("Updating player's position returned a hashmap with "+ hashMap.size()+" values.");
+        if (hashMap.size() < 4) {
+            JOmegga.log("Updating player's position returned a hashmap with " + hashMap.size() + " values.");
             return;
         }
         for (int i = 0; i < hashMap.size() / 4; i++) {
@@ -215,24 +263,81 @@ public class JOmegga {
     }
 
     public static void getAllPlayerPositions() {
-        if(getPlayers().size()==0)
+        if (getPlayers().size() == 0)
             return;
-        RPCResponse rpc = new RPCResponse() {
+        if(System.currentTimeMillis()-getInstance().lastUpdatePlayerPos > 500) {
+            getInstance().  lastUpdatePlayerPos = System.currentTimeMillis();
+            RPCResponse rpc = new RPCResponse() {
 
-            private HashMap<String, Object> playerPositions = null;
+                private HashMap<String, Object> playerPositions = null;
 
-            @Override
-            public void onResponse(JSONRPC2Response response) {
-                playerPositions = JsonHelper.convertJsonToHashMap(response.getResult());
-                updatePlayersLocation(playerPositions);
-            }
+                @Override
+                public void onResponse(JSONRPC2Response response) {
+                    playerPositions = JsonHelper.convertJsonToHashMap(response.getResult());
+                    updatePlayersLocation(playerPositions);
+                }
 
-            @Override
-            public Object getReturnValue() {
-                return playerPositions;
-            }
-        };
-        getRPCValue(rpc, "getAllPlayerPositions", "undefined");
+                @Override
+                public Object getReturnValue() {
+                    return playerPositions;
+                }
+            };
+            getRPCValue(rpc, "getAllPlayerPositions", "undefined");
+        }
+    }
+
+    public static void updateMinigames() {
+        if(System.currentTimeMillis()-getInstance().lastUpdateMinigame > 500) {
+            getInstance().lastUpdateMinigame = System.currentTimeMillis();
+            getRPCValue(new RPCResponse() {
+                @Override
+                public void onResponse(JSONRPC2Response response) {
+                    HashMap<String, Object> map = JsonHelper.convertJsonToHashMap(response.getResult());
+                    if (map == null) {
+                        return;
+                    }
+                    for (int i = 0; i < map.size() / 4; i++) {
+                        //String ruleset = (String) map.get(i + ".ruleset");
+                        String name = (String) map.get(i + ".name");
+                        //JSONArray members = (JSONArray) map.get(i + ".members");
+                        JSONArray teams = (JSONArray) map.get(i + ".teams");
+
+                        Minigame minigame = null;
+                        if ((minigame = JOmegga.getMinigameManager().getMinigame(name)) == null) {
+                            minigame = new Minigame(name);
+                            JOmegga.getInstance().minigameManager.registerMinigame(minigame);
+                        }
+
+                        for (Object teamobj : teams) {
+                            JSONObject team = (JSONObject) teamobj;
+                            String teamname = (String) team.get("name");
+                            Team team1 = null;
+                            if ((team1 = minigame.getTeam(teamname)) == null) {
+                                team1 = new Team(teamname);
+                                minigame.registerTeam(team1);
+                            }
+
+
+                            JSONArray players = (JSONArray) team.get("members");
+                            team1.getPlayers().clear();
+                            for (Object p : players) {
+                                JSONObject po = (JSONObject) p;
+                                String playername = (String) po.get("name");
+                                Player player = JOmegga.getPlayer(playername);
+                                if (player != null) {
+                                    team1.getPlayers().add(player);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public Object getReturnValue() {
+                    return null;
+                }
+            }, "getMinigames", (String) null);
+        }
     }
 
     public static void save(String name) {
@@ -273,6 +378,12 @@ public class JOmegga {
                     brickowners.add(brickOwner);
                 }
                 saveData.setBrickOwners(brickowners);
+                JSONArray materialsarray = (JSONArray) data.get("materials");
+                List<String> materials = new LinkedList<>();
+                for(int i = 0; i < materialsarray.size();i++){
+                    materials.add((String) materialsarray.get(i));
+                }
+                saveData.setMaterials(materials);
 
                 saveData.getColors().clear();
                 JSONArray colors = (JSONArray) data.get("colors");
@@ -301,6 +412,7 @@ public class JOmegga {
                     brick.setOwnerIndex((int) ((long) obj.get("owner_index")));
                     brick.setRotation(Rotation.values()[((int) ((long) obj.get("rotation")))]);
                     brick.setDirection(Direction.values()[((int) ((long) obj.get("direction")))]);
+                    brick.setMaterialIndex(((int) ((long) obj.get("material_index"))));
                     if (obj.get("color") instanceof Long) {
                         brick.setColor(new ColorMode((int) ((long) obj.get("color"))));
                     } else {
@@ -308,6 +420,9 @@ public class JOmegga {
                         brick.setColor(new Color((int) (long) colorarray.get(2), (int) (long) colorarray.get(1), (int) (long) colorarray.get(1), 255));
                     }
                     brick.setCollision((Boolean) ((JSONObject) obj.get("collision")).get("player"));
+                    brick.setWeaponcollision((Boolean) ((JSONObject) obj.get("collision")).get("weapon"));
+                    brick.setToolcollision((Boolean) ((JSONObject) obj.get("collision")).get("tool"));
+                    brick.setInteractioncollision((Boolean) ((JSONObject) obj.get("collision")).get("interaction"));
                     brick.setSize(((int) ((long) ((JSONArray) obj.get("size")).get(0))), ((int) ((long) ((JSONArray) obj.get("size")).get(1))), ((int) ((long) ((JSONArray) obj.get("size")).get(2))));
                     brick.setPosition(((int) ((long) ((JSONArray) obj.get("position")).get(0))), ((int) ((long) ((JSONArray) obj.get("position")).get(1))), ((int) ((long) ((JSONArray) obj.get("position")).get(2))));
                     bricks.add(brick);
@@ -365,11 +480,11 @@ public class JOmegga {
     }
 
     public static void registerListener(Listener listener) {
-        listeners.add(listener);
+        getInstance().listeners.add(listener);
     }
 
     public static void unregisterListener(Listener listener) {
-        listeners.remove(listener);
+        getInstance().listeners.remove(listener);
 
     }
 
@@ -380,8 +495,8 @@ public class JOmegga {
 
     public static void getRPCValue(RPCResponse responseHandler, String method, HashMap<String, Object> namedParams) {
         long id = registerResponseHandler(responseHandler);
-        if(id==-1) {
-            JOmegga.log("getRPCValue "+method+" could not be send as the id returned is -1");
+        if (id == -1) {
+            JOmegga.log("getRPCValue " + method + " could not be send as the id returned is -1");
             return;
         }
         JSONRPC2Request request = new JSONRPC2Request(method, namedParams, id);
@@ -390,8 +505,8 @@ public class JOmegga {
 
     public static void getRPCValue(RPCResponse responseHandler, String method, String param) {
         long id = registerResponseHandler(responseHandler);
-        if(id==-1) {
-            JOmegga.log("getRPCValue "+method+" could not be send as the id returned is -1");
+        if (id == -1) {
+            JOmegga.log("getRPCValue " + method + " could not be send as the id returned is -1");
             return;
         }
         JSONRPC2Request request = new JSONRPC2Request(method, Arrays.asList(param), id);
@@ -411,28 +526,73 @@ public class JOmegga {
     }
 
     public static List<Player> getPlayers() {
-        return new LinkedList<>(players);
+        return new LinkedList<>(getInstance().players);
     }
 
 
     protected static ConsoleOutput getOutput() {
-        return consoleoutput;
+        return getInstance().consoleoutput;
     }
 
     protected static ConsoleInput getInput() {
-        return consoleinput;
+        return getInstance().consoleinput;
     }
 
     public static void addPlayer(Player player) {
-        players.add(player);
+        getInstance().players.add(player);
     }
 
     public static boolean removePlayer(Player player) {
-        return players.remove(player);
+        return getInstance().players.remove(player);
     }
 
 
     protected static List<Listener> getListeners() {
-        return listeners;
+        return getInstance().listeners;
+    }
+
+    public static void setStore(String key, Object object) {
+        JSONRPC2Notification notification = new JSONRPC2Notification("store.set", Arrays.asList(key, object));
+        getOutput().addToQueue(notification);
+    }
+
+    public static Store getStore() {
+        return getInstance().store;
+    }
+
+    public static MinigameManager getMinigameManager() {
+        return getInstance().minigameManager;
+    }
+
+    public static String getServername() {
+        return getInstance().servername;
+    }
+
+    public static long getBrickcount() {
+        return getInstance().brickcount;
+    }
+
+    public  static String getDescription() {
+        return getInstance().description;
+    }
+
+    @Deprecated
+    public static void setDescription(String description) {
+        JOmegga.getInstance().description = description;
+    }
+
+    @Deprecated
+    public static void setServername(String servername) {
+        JOmegga.getInstance().servername = servername;
+    }
+
+    @Deprecated
+    public static void setBrickcount(long brickcount) {
+        JOmegga.getInstance().brickcount = brickcount;
+    }
+
+    public static void deleteStore(String key) {
+        JSONRPC2Notification notification = new JSONRPC2Notification("store.delete", Arrays.asList(key));
+        getOutput().addToQueue(notification);
     }
 }
