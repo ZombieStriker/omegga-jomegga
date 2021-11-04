@@ -37,8 +37,9 @@ public class JOmeggaThread implements Runnable {
                 e.printStackTrace();
             }
         }
+        tick();
         JOmegga.getInput().stop();
-        stop();;
+        stop();
     }
 
 

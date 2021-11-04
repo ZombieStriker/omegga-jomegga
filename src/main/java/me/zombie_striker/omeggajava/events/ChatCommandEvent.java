@@ -11,7 +11,7 @@ public class ChatCommandEvent implements Event{
         this.playername = playername;
         this.message = message;
         this.command = command;
-        if(message!=null) {
+        if(message!=null && message.length() > 0) {
             this.args = message.split(" ");
         }else{
             this.args=new String[0];

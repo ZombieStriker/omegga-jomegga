@@ -9,6 +9,7 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 import me.zombie_striker.omeggajava.events.Event;
 import me.zombie_striker.omeggajava.events.Listener;
 import me.zombie_striker.omeggajava.logic.listeners.RPCListener;
+import me.zombie_striker.omeggajava.logic.listeners.StopListener;
 import me.zombie_striker.omeggajava.objects.*;
 import me.zombie_striker.omeggajava.util.JsonHelper;
 import net.minidev.json.JSONArray;
@@ -89,6 +90,7 @@ public class JOmegga {
     public static void init(String pluginname) {
         JOmegga.getInstance().pluginname = pluginname;
         JOmegga.registerListener(new RPCListener());
+        JOmegga.registerListener(new StopListener());
         getInstance().consoleinput = new ConsoleInput();
         getInstance().consoleoutput = new ConsoleOutput();
         getInstance().corethread.start();
@@ -123,7 +125,7 @@ public class JOmegga {
                 }
             }
         }
-        for (long i = 0; i < Long.MAX_VALUE; i++) {
+        for (long i = 0; i < getInstance().responseHandlers.size()+12; i++) {
             if (!getInstance().responseHandlers.containsKey(i)) {
                 getInstance().responseHandlers.put(i, response);
                 return i;
@@ -137,9 +139,10 @@ public class JOmegga {
     }
 
     public static void callEvent(Event event) {
-        while (JOmeggaThread.callingEvents) {
+         long start = System.currentTimeMillis();
+        while (JOmeggaThread.callingEvents && System.currentTimeMillis()-start < 1000) {
         }
-        getInstance().  events.add(event);
+        getInstance().events.add(event);
     }
 
 

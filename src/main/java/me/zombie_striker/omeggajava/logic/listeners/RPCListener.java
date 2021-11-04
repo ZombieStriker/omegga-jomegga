@@ -106,7 +106,7 @@ public class RPCListener implements Listener {
                         args.append(" ");
                     }
                 }
-                ChatCommandEvent chatevent = new ChatCommandEvent((String) map.get("1"), ((String) map.get("0")), args.toString());
+                ChatCommandEvent chatevent = new ChatCommandEvent((String) map.get("1"), ((String) map.get("0")), args.toString().trim());
                 JOmegga.callEvent(chatevent);
             } else if (event.getNotification().getMethod().startsWith("cmd")) {
             String command = event.getNotification().getMethod().substring("cmd".length());
